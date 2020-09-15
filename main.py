@@ -4,8 +4,9 @@ import os
 import glob
 import json
 import numpy as np
+import numpy.ma as ma
 import nibabel as nib
-
+from matplotlib import pyplot as plt
 
 X_DIM = 128
 Y_DIM = 128
@@ -48,6 +49,15 @@ def dir_path(path):
             f"readable_dir:{path} is not valid path")
 
 
+def find_noise(data, mask):
+    #  ft 4th dim (exc mask)
+    mx = ma.masked_array(data, mask)
+    ret = np.abs(np.fft.rfft(mx))
+    # print(ret.shape)
+    plt.plot(ret.reshape(X_DIM*Y_DIM*Z_DIM, ret.shape[-1]))
+    plt.show()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--datapath",
@@ -60,8 +70,11 @@ def main():
     print(t2s_4d.shape)
     minimumFloat = sys.float_info.min
     zerosAndBelowMask = t2s_4d <= 0
-    t2s_4d[zerosAndBelowMask] = minimumFloat
-    print(np.min(t2s_4d))
+    t2s_4d_rep = np.copy(t2s_4d)
+    t2s_4d_rep[zerosAndBelowMask] = minimumFloat
+    print(np.min(t2s_4d), np.min(t2s_4d_rep))
+    # print(zerosAndBelowMask.astype('uint8'))
+    find_noise(t2s_4d, zerosAndBelowMask)
 
 
 if __name__ == "__main__":
