@@ -1,4 +1,4 @@
-
+import sys
 import argparse
 import os
 import glob
@@ -29,14 +29,15 @@ def load_echo_times(datapath):
 
 def load_images(datapath):
     imagePaths = []
-    for image in glob.iglob("{}/e*.nii".format(datapath)):
+    for image in glob.iglob("{}/realign*.nii".format(datapath)):
         imagePaths.append(image)
     imagePaths.sort()
     t2s_4d = np.zeros(shape=(X_DIM, Y_DIM, Z_DIM, T_DIM))
     for (index, imPath) in enumerate(imagePaths):
         data = nib.load(imPath)
         pixData = data.get_fdata()
-        print(np.min(pixData))
+        t2s_4d[:, :, :, index] = pixData
+    return t2s_4d
 
 
 def dir_path(path):
@@ -49,13 +50,18 @@ def dir_path(path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-path", "--datapath",
+    ap.add_argument("-p", "--datapath",
                     help="path to data folder", required=True, type=dir_path)
     args = vars(ap.parse_args())
     datapath = args["datapath"]
     echoTimes = load_echo_times(datapath=datapath)
     print(echoTimes)
-    load_images(datapath=datapath)
+    t2s_4d = load_images(datapath=datapath)
+    print(t2s_4d.shape)
+    minimumFloat = sys.float_info.min
+    zerosAndBelowMask = t2s_4d <= 0
+    t2s_4d[zerosAndBelowMask] = minimumFloat
+    print(np.min(t2s_4d))
 
 
 if __name__ == "__main__":
