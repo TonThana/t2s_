@@ -102,17 +102,6 @@ def t2s_parameter_estimation(data, echoTimes):
     print("Determination: max: {}, min: {}".format(
         np.max(determination_result), np.min(determination_result)))
 
-# def find_noise(data, mask):
-#     #  ft 4th dim (exc mask)
-#     #  normalisation
-#     mx = ma.masked_array(data, mask)
-#     two2D = np.reshape(
-#         mx, (mx.shape[0] * mx.shape[1] * mx.shape[2], mx.shape[-1]))
-#     ps = np.square(np.abs(np.fft.fft(two2D)))
-#     print(np.min(ps))
-#     plt.plot(ps)
-#     plt.show()
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -129,3 +118,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# def find_noise(data, mask):
+#     #  ft 4th dim (exc mask)
+#     #  normalisation
+#     mx = ma.masked_array(data, mask)
+#     two2D = np.reshape(
+#         mx, (mx.shape[0] * mx.shape[1] * mx.shape[2], mx.shape[-1]))
+#     ps = np.square(np.abs(np.fft.fft(two2D)))
+#     print(np.min(ps))
+#     plt.plot(ps)
+#     plt.show()
