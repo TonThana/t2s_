@@ -107,8 +107,13 @@ def t2s_parameter_estimation(data, echoTimes):
     print("Time taken to calculate R^2: ", time.time() - start)
     print("Determination: max: {}, min: {}".format(
         np.max(determination_result), np.min(determination_result)))
+
+    determination_result = np.reshape(
+        determination_result, (X_DIM, Y_DIM, Z_DIM))
     slopes = np.reshape(slopes, (X_DIM, Y_DIM, Z_DIM)) * -1
-    return slopes
+    determination_mask = (determination_result <= 0.90).astype("uint8")
+    # slopes = slopes * determination_mask
+    return (slopes, determination_mask)
 
 
 def main():
@@ -121,8 +126,10 @@ def main():
     print("[INFO] ", echoTimes)
 
     t2s_4d = load_images(datapath=datapath)
-    slopes = t2s_parameter_estimation(data=t2s_4d, echoTimes=echoTimes)
-    overlay_helper(imageData=slopes, title="before brain mask overlay")
+    slopes, determination_mask = t2s_parameter_estimation(
+        data=t2s_4d, echoTimes=echoTimes)
+    overlay_helper(
+        imageData=slopes, title="before brain mask overlay", roiData=determination_mask)
     # slopes => 1/T2s
 
     bm = load_brain_mask(datapath)

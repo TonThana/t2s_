@@ -39,7 +39,7 @@ def overlay_helper(imageData=None, roiData=None, title=None):
     fig, axs = plt.subplots(nrows=rowNum, ncols=colNum,
                             figsize=(colNum, rowNum), facecolor=(0, 0, 0),
                             num=title)
-    my_cmap = copy.copy(cm.get_cmap("jet"))
+    my_cmap = copy.copy(cm.get_cmap("spring"))
     my_cmap.set_under('w', alpha=0)
     my_cmap.set_bad('w', alpha=0)
     imageMin = np.min(imageData)
