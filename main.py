@@ -10,6 +10,7 @@ import multiprocessing
 import time
 import math
 from matplotlib import pyplot as plt
+from sklearn.metrics import r2_score
 
 X_DIM = 128
 Y_DIM = 128
@@ -54,16 +55,13 @@ def dir_path(path):
 
 def calc_determination(arguments):
     fitparam, actualdata, echoTimes = arguments
+    # print(fitparam)
     if fitparam[0] == 0:
         return 0
     p = np.poly1d(fitparam)
     yhat = p(echoTimes)
-    ybar = np.average(actualdata)
-    ssreg = np.sum((yhat - ybar) ** 2)
-    # sstot = np.sum((actualdata - ybar) ** 2)
-    # ssres = np.sum((actualdata-yhat) ** 2)
-    sstot = np.sum((actualdata-ybar) ** 2)
-    return ssreg / sstot
+
+    return r2_score(actualdata, yhat)
 
 
 def t2s_parameter_estimation(data, echoTimes):
@@ -85,9 +83,6 @@ def t2s_parameter_estimation(data, echoTimes):
         fitResult[0, :]), ", ", np.min(fitResult[0, :]))
     slopes = fitResult[0, :]
     print(slopes.shape)
-    # # view histogram
-    # plt.hist(slopes, bins=50)
-    # plt.show()
 
     # determination - R^2
     # parallel ?
