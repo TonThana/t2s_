@@ -11,6 +11,7 @@ import time
 import math
 from matplotlib import pyplot as plt
 from sklearn.metrics import r2_score
+from overlayhelper import overlay_helper
 
 X_DIM = 128
 Y_DIM = 128
@@ -45,6 +46,16 @@ def load_images(datapath):
     return t2s_4d
 
 
+def load_brain_mask(datapath):
+    brainmaskpath = [x for x in glob.iglob(
+        "{}/*brain_mask.nii.gz".format(datapath))]
+    assert len(brainmaskpath) == 1
+    # load
+    bm = nib.load(brainmaskpath[0])
+    bm = bm.get_fdata()
+    return bm
+
+
 def dir_path(path):
     if os.path.isdir(path):
         return path
@@ -56,8 +67,8 @@ def dir_path(path):
 def calc_determination(arguments):
     fitparam, actualdata, echoTimes = arguments
     # print(fitparam)
-    if fitparam[0] == 0:
-        return 0
+    # if fitparam[0] == 0:
+    #     return 0
     p = np.poly1d(fitparam)
     yhat = p(echoTimes)
 
@@ -82,7 +93,7 @@ def t2s_parameter_estimation(data, echoTimes):
     print("SLOPE max,min ", np.max(
         fitResult[0, :]), ", ", np.min(fitResult[0, :]))
     slopes = fitResult[0, :]
-    print(slopes.shape)
+    # print(slopes.shape)
 
     # determination - R^2
     # parallel ?
@@ -96,6 +107,8 @@ def t2s_parameter_estimation(data, echoTimes):
     print("Time taken to calculate R^2: ", time.time() - start)
     print("Determination: max: {}, min: {}".format(
         np.max(determination_result), np.min(determination_result)))
+    slopes = np.reshape(slopes, (X_DIM, Y_DIM, Z_DIM)) * -1
+    return slopes
 
 
 def main():
@@ -108,20 +121,20 @@ def main():
     print("[INFO] ", echoTimes)
 
     t2s_4d = load_images(datapath=datapath)
-    t2s_parameter_estimation(data=t2s_4d, echoTimes=echoTimes)
+    slopes = t2s_parameter_estimation(data=t2s_4d, echoTimes=echoTimes)
+    overlay_helper(imageData=slopes, title="before brain mask overlay")
+    # slopes => 1/T2s
+
+    bm = load_brain_mask(datapath)
+    print("mask info: shape: {}, min: {}, max: {}".format(
+        bm.shape, np.min(bm), np.max(bm)))
+    # intersect slope and mask
+    slopes = slopes * bm
+    overlay_helper(imageData=slopes, title="after brain mask overlay")
+
+# def power_spectrum_analysis(data, mask):
+#     # data normalisation
 
 
 if __name__ == "__main__":
     main()
-
-
-# def find_noise(data, mask):
-#     #  ft 4th dim (exc mask)
-#     #  normalisation
-#     mx = ma.masked_array(data, mask)
-#     two2D = np.reshape(
-#         mx, (mx.shape[0] * mx.shape[1] * mx.shape[2], mx.shape[-1]))
-#     ps = np.square(np.abs(np.fft.fft(two2D)))
-#     print(np.min(ps))
-#     plt.plot(ps)
-#     plt.show()
