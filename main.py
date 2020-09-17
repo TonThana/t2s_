@@ -128,10 +128,12 @@ def main():
     t2s_4d = load_images(datapath=datapath)
     slopes, determination_mask = t2s_parameter_estimation(
         data=t2s_4d, echoTimes=echoTimes)
-    overlay_helper(
-        imageData=slopes, title="before brain mask overlay", roiData=determination_mask)
+
+    # overlay_helper(
+    #     imageData=slopes, title="before brain mask overlay", roiData=determination_mask)
     # slopes => 1/T2s
 
+    # USE BRAINMASK
     bm = load_brain_mask(datapath)
     print("mask info: shape: {}, min: {}, max: {}".format(
         bm.shape, np.min(bm), np.max(bm)))
