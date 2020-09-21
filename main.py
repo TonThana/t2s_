@@ -139,7 +139,11 @@ def main():
         bm.shape, np.min(bm), np.max(bm)))
     # intersect slope and mask
     slopes = slopes * bm
-    overlay_helper(imageData=slopes, title="after brain mask overlay")
+
+    print("[INFO] after brainmask, max: {}, min: {} ".format(
+        np.max(slopes), np.min(slopes)),)
+    overlay_helper(
+        imageData=slopes, title="after brain mask overlay")
 
 # def power_spectrum_analysis(data, mask):
 #     # data normalisation
