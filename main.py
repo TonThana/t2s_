@@ -110,6 +110,7 @@ def t2s_parameter_estimation(data, echoTimes):
 
     determination_result = np.reshape(
         determination_result, (X_DIM, Y_DIM, Z_DIM))
+    # mult by -1 to reverse sign
     slopes = np.reshape(slopes, (X_DIM, Y_DIM, Z_DIM)) * -1
     determination_mask = (determination_result <= 0.90).astype("uint8")
     # slopes = slopes * determination_mask
@@ -141,9 +142,13 @@ def main():
     slopes = slopes * bm
 
     print("[INFO] after brainmask, max: {}, min: {} ".format(
-        np.max(slopes), np.min(slopes)),)
-    overlay_helper(
-        imageData=slopes, title="after brain mask overlay")
+        np.max(slopes), np.min(slopes)))
+    # overlay_helper(
+    #    imageData=slopes, title="after brain mask overlay")
+
+    # save
+    nib.save(slopes, os.path.join(datapath, 'R2S.img'))
+
 
 # def power_spectrum_analysis(data, mask):
 #     # data normalisation
