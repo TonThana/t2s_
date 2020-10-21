@@ -38,12 +38,17 @@ def load_images(datapath):
     for image in glob.iglob("{}/realign*.nii".format(datapath)):
         imagePaths.append(image)
     imagePaths.sort()
+    hdr = None
+    af = None
     t2s_4d = np.zeros(shape=(X_DIM, Y_DIM, Z_DIM, T_DIM))
     for (index, imPath) in enumerate(imagePaths):
         data = nib.load(imPath)
         pixData = data.get_fdata()
         t2s_4d[:, :, :, index] = pixData
-    return t2s_4d
+        if index == 0:
+            hdr = data.header
+            af = data.affine
+    return t2s_4d, hdr, af
 
 
 def load_brain_mask(datapath):
@@ -95,26 +100,27 @@ def t2s_parameter_estimation(data, echoTimes):
     slopes = fitResult[0, :]
     # print(slopes.shape)
 
-    # determination - R^2
-    # parallel ?
-    start = time.time()
-    determination_result = np.zeros((fitResult.shape[1]))
-    cpu_count = multiprocessing.cpu_count()
-    print(fitResult.shape, logData.shape)
-    with multiprocessing.Pool(processes=cpu_count) as p:
-        determination_result[:] = p.map(calc_determination, ((
-            fitResult[:, i], logData[:, i], echoTimes) for i in range(fitResult.shape[1])))
-    print("Time taken to calculate R^2: ", time.time() - start)
-    print("Determination: max: {}, min: {}".format(
-        np.max(determination_result), np.min(determination_result)))
+    # # determination - R^2
+    # # parallel ?
+    # start = time.time()
+    # determination_result = np.zeros((fitResult.shape[1]))
+    # cpu_count = multiprocessing.cpu_count()
+    # print(fitResult.shape, logData.shape)
+    # with multiprocessing.Pool(processes=cpu_count) as p:
+    #     determination_result[:] = p.map(calc_determination, ((
+    #         fitResult[:, i], logData[:, i], echoTimes) for i in range(fitResult.shape[1])))
+    # print("Time taken to calculate R^2: ", time.time() - start)
+    # print("Determination: max: {}, min: {}".format(
+    #     np.max(determination_result), np.min(determination_result)))
 
-    determination_result = np.reshape(
-        determination_result, (X_DIM, Y_DIM, Z_DIM))
+    # determination_result = np.reshape(
+    #     determination_result, (X_DIM, Y_DIM, Z_DIM))
     # mult by -1 to reverse sign
     slopes = np.reshape(slopes, (X_DIM, Y_DIM, Z_DIM)) * -1
-    determination_mask = (determination_result <= 0.90).astype("uint8")
+    # determination_mask = (determination_result <= 0.90).astype("uint8")
     # slopes = slopes * determination_mask
-    return (slopes, determination_mask)
+    # return (slopes, determination_mask)
+    return slopes
 
 
 def main():
@@ -126,8 +132,9 @@ def main():
     echoTimes = load_echo_times(datapath=datapath)
     print("[INFO] ", echoTimes)
 
-    t2s_4d = load_images(datapath=datapath)
-    slopes, determination_mask = t2s_parameter_estimation(
+    t2s_4d, _hdr, af = load_images(datapath=datapath)
+
+    slopes = t2s_parameter_estimation(
         data=t2s_4d, echoTimes=echoTimes)
 
     # overlay_helper(
@@ -140,6 +147,9 @@ def main():
         bm.shape, np.min(bm), np.max(bm)))
     # intersect slope and mask
     slopes = slopes * bm
+    zeromask = np.where(slopes < 0, 1, 0)
+    print(zeromask)
+    slopes[zeromask] = 0
 
     print("[INFO] after brainmask, max: {}, min: {} ".format(
         np.max(slopes), np.min(slopes)))
@@ -147,7 +157,8 @@ def main():
     #    imageData=slopes, title="after brain mask overlay")
 
     # save
-    nib.save(slopes, os.path.join(datapath, 'R2S.img'))
+    slopes_a75 = nib.Nifti1Image(slopes, affine=af)
+    nib.save(slopes_a75, os.path.join(datapath, 'R2S.nii'))
 
 
 # def power_spectrum_analysis(data, mask):
